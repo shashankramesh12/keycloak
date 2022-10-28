@@ -1,0 +1,120 @@
+creating self signed ssl certificate
+
+1) openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -keyout key.pem -out cert.pem [CA]
+2) openssl rsa -noout -text -in key.pem [ OpenSSL verify Key content ]
+3) openssl rsa -noout -text -in cert.pem [ OpenSSL verify Key content ]
+4) openssl x509 -noout -text -in key.pem [OpenSSL verify CA certificate]
+5) openssl x509 -noout -text -in cert.pem [OpenSSL verify CA certificate]
+6) openssl genrsa -des3 -out server.key 4096 [Generate a server key and request for signing]
+7) openssl req -new -key server.key -out server.csr [generate a Certificate Signing Request]
+8) openssl rsa -noout -text -in server.key [OpenSSL verify server key content]
+9) openssl req -noout -text -in server.csr [OpenSSL verify Certificate Signing Request]
+10) openssl x509 -req -days 365 -in server.csr -CA cert.pem -CAkey key.pem -CAcreateserial -out server.crt [Sign a certificate with CA]
+11) openssl x509 -noout -text -in server.crt [OpenSSL verify server certificate]
+
+
+
+trushtstore
+1) bin/kc.sh start --hostname=keycloak.local --hostname-strict-backchannel=true --hostname=preprod1.fireflink.com  
+
+2) bin/kc.sh build --spi-x509cert-lookup-provider=nginx
+
+bin/kc.sh start --spi-x509cert-lookup-nginx-ssl-client-cert=addtrustexternalcaroot.crt --spi-x509cert-lookup-nginx-ssl-cert-chain-prefix=addtrustexternalcaroot.crt --spi-x509cert-lookup-ngnix-certificate-chain-length=10
+
+
+
+--spi-truststore-file-file=/home/TYSS/myTrustStore.jks --spi-truststore-file-password=admin --spi-truststore-file-hostname-verification-policy=WILDCARD --hostname=preprod.fireflink.com --hostname-port=8443
+
+--proxy none --hostname-admin=preprod.fireflink.com:8443/admin
+
+
+-spi-x509cert-lookup-nginx-ssl-client-cert=addtrustexternalcaroot.crt --spi-x509cert-lookup-<nginx>-ssl-cert-chain-prefix=addtrustexternalcaroot.crt --spi-x509cert-lookup-ngnix-certificate-chain-length=10
+
+
+bin/kc.sh start --https-certificate-file=/home/TYSS/fireflink/fireflink.pem --https-certificate-key-file=/home/TYSS/fireflink/server.pem --https-protocols=TLSv1.3,TLSv1.2 --hostname=keycloak.local --hostname-strict-backchannel=true --log-level=DEBUG --log-file=/home/TYSS/log.file
+
+
+bin/kc.sh start --https-certificate-file=/home/TYSS/fireflink/fireflink.pem --https-certificate-key-file=/home/TYSS/fireflink/server.pem  --hostname=keycloak.local --log-level=DEBUG --log-file=/home/TYSS/log.file 
+
+
+bin/kc.sh start --hostname=keycloak.local --log-file=/home/TYSS/log.file --http-enabled=true --log-level=DEBUG
+
+bin/kc.sh start --http-enabled=true --hostname=preprod1.fireflink.com --db-url-host=mykeycloakdb --log-level=ALL
+
+
+
+
+2022-08-24 16:41:14,256 DEBUG [org.hibernate.resource.jdbc.internal.LogicalConnectionManagedImpl] (Timer-0) `hibernate.connection.provider_disables_autocommit` was enabled.  This setting should only be enabled when you are certain that the Connections given to Hibernate by the ConnectionProvider have auto-commit disabled.  Enabling this setting when the Connections do not have auto-commit disabled will lead to Hibernate executing SQL operations outside of any JDBC/SQL transaction.
+2022-08-24 16:41:14,256 DEBUG [org.hibernate.resource.transaction.backend.jta.internal.JtaTransactionCoordinatorImpl] (Timer-0) Hibernate RegisteredSynchronization successfully registered with JTA platform
+2022-08-24 16:41:14,260 DEBUG [org.keycloak.transaction.JtaTransactionWrapper] (Timer-0) JtaTransactionWrapper  commit
+2022-08-24 16:41:14,260 DEBUG [org.hibernate.engine.transaction.internal.TransactionImpl] (Timer-0) On TransactionImpl creation, JpaCompliance#isJpaTransactionComplianceEnabled == false
+2022-08-24 16:41:14,260 DEBUG [org.hibernate.resource.jdbc.internal.LogicalConnectionManagedImpl] (Timer-0) Initiating JDBC connection release from beforeTransactionCompletion
+2022-08-24 16:41:14,261 DEBUG [org.hibernate.resource.jdbc.internal.LogicalConnectionManagedImpl] (Timer-0) Initiating JDBC connection release from afterTransaction
+2022-08-24 16:41:14,261 DEBUG [org.keycloak.transaction.JtaTransactionWrapper] (Timer-0) JtaTransactionWrapper end
+2022-08-24 16:41:14,261 DEBUG [org.keycloak.services.scheduled.ScheduledTaskRunner] (Timer-0) Executed scheduled task AbstractLastSessionRefreshStoreFactory$$Lambda$1223/0x0000000840b22440
+2022-08-24 16:41:19,252 DEBUG [org.keycloak.transaction.JtaTransactionWrapper] (Timer-0) new JtaTransactionWrapper
+2022-08-24 16:41:19,252 DEBUG [org.keycloak.transaction.JtaTransactionWrapper] (Timer-0) was existing? false
+2022-08-24 16:41:19,253 DEBUG [org.keycloak.transaction.JtaTransactionWrapper] (Timer-0) JtaTransactionWrapper  commit
+2022-08-24 16:41:19,253 DEBUG [org.keycloak.transaction.JtaTransactionWrapper] (Timer-0) JtaTransactionWrapper end
+2022-08-24 16:41:19,253 DEBUG [org.keycloak.services.scheduled.ScheduledTaskRunner] (Timer-0) Executed scheduled task aaAbstractLastSessionRefreshStoreFactory$$Lambda$1223/0x0000000840b22440
+
+index.dwt missing
+
+
+
+
+
+start keycloak in production
+1) bin/kc.sh start --proxy passthrough --https-certificate-file=/home/TYSS/certificate/cert.pem --https-certificate-key-file=/home/TYSS/certificate/key.pem --https-protocols=TLSv1.3,TLSv1.2 --hostname=keycloak.local --hostname-strict-backchannel=true
+
+
+run keycloak in background
+2) nohup ./kc.sh start --https-certificate-file=/home/TYSS/certificate/cert.pem --https-certificate-key-file=/home/TYSS/certificate/key.pem --https-protocols=TLSv1.3,TLSv1.2 --hostname=keycloak.local --hostname-strict-backchannel=true 
+
+to set admin username password
+1) export KEYCLOAK_ADMIN=admin
+2) export KEYCLOAK_ADMIN_PASSWORD=password
+
+converting file to ssl certificates .pem files to
+
+1) openssl x509 -in fireflink.com.crt -out fireflink.pem
+2) cat fireflink.key > server.key 
+3) mv server.key server.pem
+
+
+add ca bundell root file in belowurl 
+chrome://settings/security
+
+
+
+psql
+
+psql -U postgres postgres
+
+host all all 10.10.10.250 255.255.255.0 trust
+
+10.10.10.250 255.255.255.0
+
+
+https://www.tecmint.com/install-postgressql-and-pgadmin-in-centos-8/
+
+
+
+local conf to run in webpage [C:\Windows\System32\drivers\etc]
+10.10.10.19 pre
+
+
+https://github.com/keycloak/keycloak/releases/download/18.0.0/keycloak-18.0.0.tar.gz
+
+
+
+docker run --name db \
+  --net keycloak \
+  -e POSTGRES_USER=admin \
+  -e POSTGRES_PASSWORD=Passw0rd \
+  -e POSTGRES_DB=keycloakdb \
+  -d docker.io/library/postgres:latest
+
+
+
+

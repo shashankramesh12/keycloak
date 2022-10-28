@@ -1,0 +1,141 @@
+curl --location --request GET 'http://localhost:8103/optimize/v1/trees/pages' \
+--header 'projectId: PJT1034' \
+--header 'projectType: Web' \
+--header 'Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX25hbWUiOiJtb2hhbW1lZC5zYXFlYkB0ZXN0eWFudHJhLmNvbSIsInNjb3BlIjpbInJlYWQiLCJ3cml0ZSJdLCJuYW1lIjoibW9oYW1tZWQuc2FxZWIiLCJhY3RpdmF0aW9uU3RhdHVzIjoiQUNUSVZFIiwiaWQiOiJVU1IxMTEzIiwicHJpdmlsZWdlIjoiU3VwZXIgQWRtaW4iLCJleHAiOjE2NjQ2NDM2MDMsInVzZXJOYW1lIjoibW9oYW1tZWQuc2FxZWJAdGVzdHlhbnRyYS5jb20iLCJsaWNlbnNlSWQiOiJMSUMxMDM1IiwianRpIjoiVm52X2ZBN0hnYVRCUFpLQzdiak5BbndpMDVZIiwiY2xpZW50X2lkIjoiY2xpZW50Vml2In0.SLisH2Zj6lWtn2gfGxGrpXHfUlRv2w-ZhEvn64JueWQIAhFohgldg_4CAvpf7blcuFL8m74D4InitBJfRmgzs8CSpwzTdNsT0icx1rKYSRF0Qbgd3tHzYnwC6Vqn1KBJF9xR9QyN1M0qAWj4HMcAWSzXEVq1eUsAbbykTNu9FkXDpzyk9qSQgJ7i0qRBQutAqSVvPjOeCR0JdoLgEMOvMZNGvjEnnz6ZrVA3CbpXQSGdw9tZR4Yt1ecGoCLBVh4Z24tdffIZuJHpoEKoQubeC1Z8UYfopmwreNUne92JfAneCgg_zYOPlja85zfCJwzkNuzSkK4Bv-PPSrvbN1d0cw'
+
+
+curl \
+  -d "client_id=security-admin-console" \
+  -d "username=user" \
+  -d "password=bitnami" \
+  -d "grant_type=password" \
+  "http://10.10.10.250:8443/realms/master/protocol/openid-connect/token"
+
+
+
+
+curl --cacert server-cert.pem --cert server-keystore.jks -v --data"username=sheeraz&password=9845582278&grant_type=password" https://10.10.10.19:8443/realms/springbootkeycloak/protocol/openid-connect/token
+
+
+curl --cacert server-cert.pem --cert server-keystore.jks -v --data "clientid=login-app&clientsecret=bKe0oZEf1Y2KgEFaM5uPpOIYJbXLfdhA&username=sheeraz&password=9845582278&grant_type=password&scope=openid" https://www.preprod1.fireflink.com:8443/realms/springbootkeycloak/protocol/openid-connect/token
+
+
+export TKN=$(curl -X POST 'http://preprod1.fireflink.com:8443/realms/springbootkeycloak/protocol/openid-connect/token' \
+ -H "Authorization: Bearer ${access_token}" \
+ -d "username=sheerazr" \
+ -d 'password=9845582278' \
+ -d 'grant_type=password' \
+ -d 'client_id=login-app' | jq -r '.access_token')
+ 
+ 
+ 
+ 
+curl -X GET "https://www.preprod1.fireflink.com:8443/realms/springbootkeycloak/protocol/openid-connect/token"
+ 
+ 
+curl https://10.10.10.19:8443/realms/springbootkeycloak/protocol/openid-connect/token \
+       --insecure \
+       --data "grant_type=password&scope=openid profile&sheeraz=&9845582278=&client_id=login-app&client_secret=bKe0oZEf1Y2KgEFaM5uPpOIYJbXLfdhA" \
+       -E /home/tyss/fireflink/fireflink.com.crt \
+       --key /home/tyss/fireflink/fireflink.key
+	   
+	   
+	   
+curl -L -X POST 'https://10.10.10.19:8443/realms/springbootkeycloak/protocol/openid-connect/token' \
+-H 'Content-Type: application/x-www-form-urlencoded' \
+-E /opt/bitnami/keycloak/certs/truststore.jks \
+--key /opt/bitnami/keycloak/certs/keystore.jks  \
+--data-urlencode 'client_id=login-app' \
+--data-urlencode 'grant_type=password' \
+--data-urlencode 'client_secret=bKe0oZEf1Y2KgEFaM5uPpOIYJbXLfdhA' \
+--data-urlencode 'scope=openid' \
+--data-urlencode 'username=sheeraz' \
+--data-urlencode 'password=9845582278'
+
+
+
+ENV KC_FEATURES=expose-token=true
+
+
+
+
+FROM quay.io/keycloak/keycloak:latest as builder
+
+ENV KC_HEALTH_ENABLED=true
+ENV KC_METRICS_ENABLED=true
+ENV KC_FEATURES=token-exchange
+ENV KC_DB=postgres
+
+# Install custom providers
+RUN curl -sL https://github.com/aerogear/keycloak-metrics-spi/releases/download/2.5.3/keycloak-metrics-spi-2.5.3.jar -o /opt/keycloak/providers/keycloak-metrics-spi-2.5.3.jar
+RUN /opt/keycloak/bin/kc.sh build
+
+FROM quay.io/keycloak/keycloak:latest
+COPY --from=builder /opt/keycloak/ /opt/keycloak/
+USER root
+COPY cert.jks /opt/keycloak/conf
+COPY truststore.jks /opt/keycloak/conf
+RUN update-ca-trust
+USER 1000
+WORKDIR /opt/keycloak
+
+# Change these values to point to a running postgres instance
+ENV KC_DB_URL=jdbc:postgresql://db/keycloakdb
+ENV KC_DB_USERNAME=admin
+ENV KC_DB_PASSWORD=Passw0rd
+ENV KC_HOSTNAME=preprod.fireflink.com
+
+ENTRYPOINT ["/opt/keycloak/bin/kc.sh", "start"]
+
+
+docker run -it -d --name keycloak --net keycloak-network -p 8443:8443 -e KEYCLOAK_DATABASE_HOST=postgresql -e KEYCLOAK_DATABASE_PORT=5432 -e KEYCLOAK_DATABASE_NAME=postgres_keycloak -e KEYCLOAK_DATABASE_SCHEMA=public -e KEYCLOAK_ENABLE_TLS=true -e KEYCLOAK_TLS_KEYSTORE_FILE=/opt/keycloak/keystore.jks -e KEYCLOAK_TLS_TRUSTSTORE_FILE=/opt/keycloak/truststore.jks -e KEYCLOAK_TLS_KEYSTORE_PASSWORD=changeit -e KEYCLOAK_TLS_TRUSTSTORE_PASSWORD=changeit -e KEYCLOAK_ADMIN=admin -e KEYCLOAK_ADMIN_PASSWORD=admin keycloak_image
+
+ 
+ 
+ 
+docker run -itd \
+  -v keycloak-vol:/Keycloak \
+  --net keycloak-network \
+  -e KEYCLOAK_USER=admin \
+  -e KEYCLOAK_PASSWORD=admin \
+  -p 8080:8080 \
+  -p 8443:8443 \
+  -e KEYCLOAK_DB=postgres \
+  -e KEYCLOAK_FEATURES=token-exchange \
+  -e KEYCLOAK_ENABLE_TLS=true \
+  -e KEYCLOAK_TLS_KEYSTORE_FILE=/opt/keycloak/conf/keystore.jks \
+  -e KEYCLOAK_TLS_TRUSTSTORE_FILE=/opt/keycloak/conf/turststore.jks \
+  -e KEYCLOAK_TLS_KEYSTORE_PASSWORD=changeit \
+  -e KEYCLOAK_TLS_TRUSTSTORE_PASSWORD=changeit \
+  keycloak_image
+  
+  
+  
+    -e KC_HTTPS_CERTIFICATE_FILE=/opt/keycloak/conf/server.crt.pem
+  -e KC_HTTPS_CERTIFICATE_KEY_FILE=/opt/keycloak/conf/server.key.pem
+  
+  
+  
+  docker run -itd \
+  --net keycloak \
+  --name keycloak \
+  -e KEYCLOAK_USER=admin \
+  -e KEYCLOAK_PASSWORD=admin \
+  -p 8080:8080 \
+  -p 8443:8443 \
+  -e KEYCLOAK_DB=postgres \
+  -e KEYCLOAK_FEATURES=token-exchange \
+  -e KEYCLOAK_DB_URL=jdbc:postgresql://db/keycloakdb \
+  -e KEYCLOAK_DB_USERNAME=admin \
+  -e KEYCLOAK_DB_PASSWORD=Passw0rd \
+  jboss/keycloak
+  
+  
+  
+  docker run -itd   --net keycloak   --name keycloak   -e KEYCLOAK_USER=admin   -e KEYCLOAK_PASSWORD=admin   -p 8080:8080   -p 8443:8443   -e KEYCLOAK_DB=postgres   -e KEYCLOAK_FEATURES=token-exchange   -e KEYCLOAK_DB_URL=jdbc:postgresql://db/keycloakdb   -e KEYCLOAK_DB_USERNAME=admin   -e KEYCLOAK_DB_PASSWORD=Passw0rd   jboss/keycloak
+
+
+  
+  
+  
+  

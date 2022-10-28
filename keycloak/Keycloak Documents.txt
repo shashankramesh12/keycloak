@@ -1,0 +1,178 @@
+
+
+                    Running keycloak in container with postgressql
+Step 1 - docker pull bitnami/postgresql [pulls the bitnami/postgresql image from docker hub]
+Step 2 - Write a Dockerfile with following inputs
+
+FROM bitnami/keycloak
+RUN mkdir /opt/bitnami/keycloak/certs
+COPY keystore.jks /opt/bitnami/keycloak/certs/
+COPY truststore.jks /opt/bitnami/keycloak/certs/
+
+step 3 - docker build -t keycloak . [builds keycloak image]
+
+Step 4 - docker network create keycloak --driver bridge [creates a docker network by name keycloak ]
+Step 5 - docker volume create keycloak-vol [create a docker volume]
+Step 6 - docker run -it -d -v keycloak_postgres_vol:/postgre --network keycloak --name postgresql -p 5432:5432 -e POSTGRESQL_USERNAME=bn_keycloak -e POSTGRESQL_PASSWORD=password123 -e POSTGRESQL_DATABASE=bitnami_keycloak bitnami/postgresql [creates a postgres container with volume attached]
+step 6 - docker run -it -d -v keycloak-vol:/Keycloak --network keycloak --name keycloak -p 8080:8080 -p 8443:8443 -e KEYCLOAK_DATABASE_HOST=postgresql -e KEYCLOAK_DATABASE_PORT=5432 -e KEYCLOAK_DATABASE_NAME=bitnami_keycloak -e KEYCLOAK_DATABASE_USER=bn_keycloak -e KEYCLOAK_DATABASE_PASSWORD=password123 -e KEYCLOAK_DATABASE_SCHEMA=public -e KEYCLOAK_ENABLE_TLS=true -e KEYCLOAK_TLS_KEYSTORE_FILE=/opt/bitnami/keycloak/certs/keystore.jks -e KEYCLOAK_TLS_TRUSTSTORE_FILE=/opt/bitnami/keycloak/certs/truststore.jks -e KEYCLOAK_TLS_KEYSTORE_PASSWORD=changeit -e KEYCLOAK_TLS_TRUSTSTORE_PASSWORD=changeit keycloak [creates keycloak docker container]
+step 7 - enter the ip address and port to run keycloak
+spte 8 - enter admin credentials username = user password = bitnami
+                                            Command To RUN Keycloak in Dev-env
+
+1      - docker run -it -d -v /home/TYSS/keycloak_vol/keycloak_postgres_vol:/bitnami --network keycloak --name postgresql -p 5432:5432 -e POSTGRESQL_USERNAME=bn_keycloak -e POSTGRESQL_PASSWORD=password123 -e POSTGRESQL_DATABASE=bitnami_keycloak bitnami/postgresql [creates a postgres container with volume attached]
+2      - docker run -it -d -v /home/TYSS/keycloak_vol/keycloak-vol:/Keycloak --network keycloak --name keycloak -p 8080:8080 -p 8443:8443 -e KEYCLOAK_DATABASE_HOST=postgresql -e KEYCLOAK_DATABASE_PORT=5432 -e KEYCLOAK_DATABASE_NAME=bitnami_keycloak -e KEYCLOAK_DATABASE_USER=bn_keycloak -e KEYCLOAK_DATABASE_PASSWORD=password123 -e KEYCLOAK_DATABASE_SCHEMA=public -e KEYCLOAK_ENABLE_TLS=true -e KEYCLOAK_TLS_KEYSTORE_FILE=/opt/bitnami/keycloak/certs/cert.jks -e KEYCLOAK_TLS_TRUSTSTORE_FILE=/opt/bitnami/keycloak/certs/truststore.jks -e KEYCLOAK_TLS_KEYSTORE_PASSWORD=changeit -e KEYCLOAK_TLS_TRUSTSTORE_PASSWORD=changeit keycloak_new [creates keycloak docker container]
+
+3v     -  postgress data location /bitnami/postgresql/data
+
+
+
+
+
+
+                               Creating ssl certificates and truststore and keystore
+Step 1 - openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -keyout key.pem -out cert.pem [CA]
+Step 2 - openssl genrsa -des3 -out server.key 4096 [Generate a server key and request for signing]
+Step 3 - openssl req -new -key server.key -out server.csr [generate a Certificate Signing Request]
+step 4 - openssl x509 -req -days 365 -in server.csr -CA cert.pem -CAkey key.pem -CAcreateserial -out server.crt [Sign a certificate with CA]
+spte 5 - openssl pkcs12 -export -in cert.pem -inkey key.pem -out certificate.p12 -name "certificate" [creates keystore in .p12 format]
+step 6 - keytool -importkeystore -srckeystore certificate.p12 -srcstoretype pkcs12 -destkeystore cert.jks [converts .p12 format to .jks format]
+step 7 - keytool -import -alias .fireflink.com -keystore truststore.jks -file fireflink.com.crt [generate truststore using fireflink certificate file]
+
+
+                               Local changes and updateing root certificate to browser
+Step 1 - navigate to C:\Windows\System32\drivers\etc
+Step 2 - open hosts file
+Step 3 - enter 10.10.10.19 preprod1.fireflink.com [which runs keycloak in preprod1.fireflink.com:8443]
+Step 4 - navigate to chrome://settings/security in chrome browser and scroll down to manege certificates
+Step 5 - Add root certificate to  browser
+
+
+                                     Generating access token
+Step 1 - Create a Realm by logging in as admin [created springbootkeycloak realm]
+Step 2 - Create a client in newly created realm [created login-app client]
+[Note  -  After creating client it will navigate to other page in that page we need to make some changes follow step 3]
+Step 3 - In valid redirect uri's text box enter https://preprod1.fireflink.com:8443/*
+Step 4 - create a role and a user (added user role as role & created user by name sheeraz) [Keycloak uses Role-Based Access; therefore, each user must have a role.]
+Step 5 - Enter all the details required for user
+Step 6 - generate token using postman with following details
+         0 - use get method with url - https://preprod1.fireflink.com:8443/realms/springbootkeycloak/protocol/openid-connect/token
+         1 - Token Name - oauth
+		 2 - Grant Type - password credentials
+		 3 - Access Token URL - https://preprod1.fireflink.com:8443/realms/springbootkeycloak/protocol/openid-connect/token
+		 4 - Client ID - login-app
+		 5 - Client Secre - take from keycloak
+		 6 - Username - sheeraz
+		 7 - password - 9845582278
+		 8 - Scope - openid
+		 9 - Client Authentication - send as basic auth header
+		 10 - click on get new access token
+		 
+Refrence site - https://www.baeldung.com/spring-boot-keycloak
+
+Seting up openid
+navigate to https://console.cloud.google.com/projectselector2/apis/dashboard?pli=1&supportedpurview=project and enableAPIs and services
+
+
+
+docker run -it -d -v keycloak-vol:/Keycloak --network keycloak --name keycloak -p 8443:8443 -e KEYCLOAK_DATABASE_HOST=postgresql -e KEYCLOAK_DATABASE_PORT=5432 -e KEYCLOAK_DATABASE_NAME=bitnami_keycloak -e KEYCLOAK_DATABASE_USER=bn_keycloak -e KEYCLOAK_DATABASE_PASSWORD=password123 -e KEYCLOAK_DATABASE_SCHEMA=public -e KEYCLOAK_ENABLE_TLS=true -e KEYCLOAK_TLS_KEYSTORE_FILE=/home/TYSS/tyss-projects-jars/keystore.tomcat -e KEYCLOAK_TLS_TRUSTSTORE_FILE=/home/TYSS/tyss-projects-jars/truststore.jks -e KEYCLOAK_TLS_KEYSTORE_PASSWORD=changeit -e KEYCLOAK_TLS_TRUSTSTORE_PASSWORD=changeit bitnami/keycloak
+
+
+
+                                                         keycloak json file to generate token
+{
+  "realm" : "springbootkeycloak",
+  "resource" : "customer-portal",
+  "realm-public-key" : "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkGZ8r70/E2IvI3lPMb96ltccIKczNwg9nSWWhQL7FxQ72uHeVnNPCIbxsnBlA9eh4jD7lhKM7TtV1ETXltsGL43KqGqvLRxEIoL5oBMbJc1p1tSUfxDvJS1wrKejtHNQqLqkukdd7FdxJLW/xZaiDQd8sCdTmppKpUd2dNj3A4kA4NueRNcoNKTdqiLfRPmIaFwZE5sDzNefODfuI4Ub/VIGge9hxVGJaxZ14bSGrLrsdB1EMRrspCiY/COVBwyR/Ed7Y1py2d23nhF0Nbj4QaxirnhaWmHIilWVdaH7lMSeUwtT0EMFFqi2BPjS2GvnXDzXlwmqdsrQB+NPA1+FvQIDAQAB",
+  "auth-server-url" : "https://10.10.10.19:8443/realm",
+  "ssl-required" : "external",
+  "use-resource-role-mappings" : true,
+  "enable-cors" : true,
+  "cors-max-age" : 1000,
+  "cors-allowed-methods" : "POST, PUT, DELETE, GET",
+  "bearer-only" : true,
+  "enable-basic-auth" : true,
+  "expose-token" : true,
+   "credentials" : {
+      "secret" : "bKe0oZEf1Y2KgEFaM5uPpOIYJbXLfdhA"
+   },
+
+   "connection-pool-size" : 20,
+   "disable-trust-manager": false,
+   "allow-any-hostname" : false,
+   "truststore" : "/opt/bitnami/keycloak/certs/truststore.jks",
+   "truststore-password" : "changeit",
+   "client-keystore" : "/opt/bitnami/keycloak/certs/client-keystore.jks",
+   "client-keystore-password" : "changeit"
+}
+
+
+
+
+docker run -it -d -v keycloak-vol:/Keycloak --network keycloak --name keycloak -p 8080:8080 -e KEYCLOAK_DATABASE_HOST=postgresql -e KEYCLOAK_DATABASE_PORT=5432 -e KEYCLOAK_DATABASE_NAME=bitnami_keycloak -e KEYCLOAK_DATABASE_USER=bn_keycloak -e KEYCLOAK_DATABASE_PASSWORD=password123 -e KEYCLOAK_DATABASE_SCHEMA=public bitnami/
+
+
+docker run -it -d -v keycloak-vol:/Keycloak --network keycloak --name keycloak -p 8443:8443 -e KEYCLOAK_DATABASE_HOST=postgresql -e KEYCLOAK_DATABASE_PORT=5432 -e KEYCLOAK_DATABASE_NAME=bitnami_keycloak -e KEYCLOAK_DATABASE_USER=bn_keycloak -e KEYCLOAK_DATABASE_PASSWORD=password123 -e KEYCLOAK_DATABASE_SCHEMA=public -e KEYCLOAK_TLS_KEYSTORE_FILE=/opt/bitnami/keycloak/certs/cert.jks -e KEYCLOAK_TLS_TRUSTSTORE_FILE=/opt/bitnami/keycloak/certs/truststore.jks -e KEYCLOAK_TLS_KEYSTORE_PASSWORD=changeit -e KEYCLOAK_TLS_TRUSTSTORE_PASSWORD=changeit keycloakimage
+
+
+
+docker run -it -d -v keycloak-vol:/Keycloak --network keycloak --name keycloak -p 8443:8443 -e KEYCLOAK_ENABLE_TLS=true -e KEYCLOAK_TLS_KEYSTORE_FILE=/opt/bitnami/keycloak/certs/cert.jks -e KEYCLOAK_TLS_TRUSTSTORE_FILE=/opt/bitnami/keycloak/certs/truststore.jks -e KEYCLOAK_TLS_KEYSTORE_PASSWORD=changeit -e KEYCLOAK_TLS_TRUSTSTORE_PASSWORD=changeit keycloak
+
+
+/opt/bitnami/keycloak/providers
+
+
+docker run -d \
+  --net keycloak \
+  --name keycloak \
+  -e KEYCLOAK_USER=myadmin \
+  -e KEYCLOAK_PASSWORD=admin \
+  -e KEYCLOAK_ENABLE_TLS=true \
+  -e KEYCLOAK_TLS_KEYSTORE_FILE=/opt/keycloak/certs/cert.jks \
+  -e KEYCLOAK_TLS_TRUSTSTORE_FILE=/opt/keycloak/certs/truststore.jks \
+  -p 8280:8280 \
+  -p 8443:8443 \
+  -e KEYCLOAK_FEATURES=token-exchange \
+  keycloak2
+  
+  
+keycloak-vol:/Keycloak --network keycloak --name keycloak -p 8443:8443 -e KEYCLOAK_ENABLE_TLS=true -e KEYCLOAK_TLS_KEYSTORE_FILE=/opt/keycloak/certs/cert.jks -e KEYCLOAK_TLS_TRUSTSTORE_FILE=/opt/bitnami/keycloak/certs/truststore.jks -e KEYCLOAK_TLS_KEYSTORE_PASSWORD=changeit -e KEYCLOAK_TLS_TRUSTSTORE_PASSWORD=changeit keycloak18 start
+ 
+ 
+ 
+KC_HTTPS_CERTIFICATE_FILE and KC_HTTPS_CERTIFICATE_KEY_FILE
+ 
+ -e KEYCLOAK_HTTPS_CERTIFICATE_FILE
+ -e KEYCLOAK_HTTPS_CERTIFICATE_KEY_FILE
+ 
+ 
+ 
+docker run -it -d -v keycloak-vol:/Keycloak --network keycloak --name keycloak -p 8080:8080 -p 8443:8443 -e KEYCLOAK_DATABASE_HOST=postgresql -e KEYCLOAK_DATABASE_PORT=5432 -e KEYCLOAK_DATABASE_NAME=bitnami_keycloak -e KEYCLOAK_DATABASE_USER=bn_keycloak -e KEYCLOAK_DATABASE_PASSWORD=password123 -e KEYCLOAK_DATABASE_SCHEMA=public -e KEYCLOAK_ENABLE_TLS=true -e KEYCLOAK_HTTPS_CERTIFICATE_FILE=/opt/bitnami/keycloak/certs/fireflink.pem -e KEYCLOAK_HTTPS_CERTIFICATE_KEY_FILE=/opt/bitnami/keycloak/certs/fireflink.key.pem keycloak19
+ 
+ 
+ 
+docker run -it -d -v keycloak-vol:/Keycloak --network keycloak --name keycloak -p 8080:8080 -p 8443:8443 -e KEYCLOAK_ENABLE_TLS=true -e KEYCLOAK_TLS_KEYSTORE_FILE=/opt/bitnami/keycloak/certs/keystore.jks -e KEYCLOAK_TLS_TRUSTSTORE_FILE=/opt/bitnami/keycloak/certs/truststore.jks -e KEYCLOAK_TLS_KEYSTORE_PASSWORD=changeit -e KEYCLOAK_TLS_TRUSTSTORE_PASSWORD=changeit -e KEYCLOAK_ADMIN=admin -e KEYCLOAK_ADMIN_PASSWORD=admin quay.io/keycloak/keycloak:18.0.0
+ 
+ 
+ 
+docker run -it -d -p 8080:8080 -p 8443:8443 -e KEYCLOAK_ADMIN=admin -e KEYCLOAK_ADMIN_PASSWORD=admin -e KEYCLOAK_ENABLE_TLS=true -e KEYCLOAK_TLS_KEYSTORE_FILE=/opt/keycloak/certs/cert.jks -e KEYCLOAK_TLS_TRUSTSTORE_FILE=/opt/keycloak/certs/truststore.jks -e KEYCLOAK_TLS_KEYSTORE_PASSWORD=changeit -e KEYCLOAK_TLS_TRUSTSTORE_PASSWORD=changeit keyclock18 start
+ 
+ 
+docker run -p 8080:8080 -e KEYCLOAK_ADMIN=admin -e KEYCLOAK_ADMIN_PASSWORD=admin quay.io/keycloak/keycloak:18.0.2 start-dev
+ 
+ 
+docker run -it -d -v keycloak-vol:/Keycloak --network keycloak --name keycloak -p 8080:8080 -e KEYCLOAK_DATABASE_HOST=postgresql -e KEYCLOAK_DATABASE_PORT=5432 -e KEYCLOAK_DATABASE_NAME=bitnami_keycloak -e KEYCLOAK_DATABASE_USER=bn_keycloak -e KEYCLOAK_DATABASE_PASSWORD=password123 -e KEYCLOAK_DATABASE_SCHEMA=public -e KEYCLOAK_ADMIN=admin -e KEYCLOAK_ADMIN_PASSWORD=admin quay.io/keycloak/keycloak:18.0.2 start-dev
+ 
+ 
+docker pull bitnami/keycloak:18.0.2-debian-11-r28
+
+
+
+http://10.10.10.250:8080/admin/master/console/#/realms/FireFlink/users
+
+
+
+
+
+
+
+ 

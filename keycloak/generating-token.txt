@@ -1,0 +1,49 @@
+curl \
+  -d "client_id=login-app" \
+  -d "client_secret=3FVqSooBHIzLkMOXNCn0P4fXJHvNyolQ" \
+  -d 'username=shashank' \
+  -d 'password=9845582278@mM' \
+  -d "grant_type=password" \
+  "http://10.10.10.19:8080/realms/springbootkeycloak/protocol/openid-connect/token"
+  
+  curl \
+  --insecure \
+  -d "client_id=login-app" \
+  -d "client_secret=3FVqSooBHIzLkMOXNCn0P4fXJHvNyolQ" \
+  -d 'username=shashank' \
+  -d 'password=9845582278@mM' \
+  -d "grant_type=password" \
+  "https://10.10.10.19:8443/realms/springbootkeycloak/protocol/openid-connect/token"
+  
+  
+    curl \
+  -k \
+  -d "client_id=login-app" \
+  -d "client_secret=3FVqSooBHIzLkMOXNCn0P4fXJHvNyolQ" \
+  -d 'username=shashank' \
+  -d 'password=9845582278@mM' \
+  -d "grant_type=password" \
+  "https://10.10.10.19:8443/realms/springbootkeycloak/protocol/openid-connect/token"
+  
+  
+
+  
+  
+
+ 
+  
+  
+  
+  
+  
+       -E /path/to/client_cert.crt \
+       --key /path/to/client_cert.key
+
+  
+  
+  
+  
+  http://10.10.10.250:8080/realms/master/protocol/openid-connect/auth?client_id=security-admin-console&redirect_uri=http%3A%2F%2F10.10.10.250%3A8080%2Fadmin%2Fmaster%2Fconsole%2F%23%2F&state=1c2e4c0d-3284-4a85-8626-41d3aab296c1&response_mode=fragment&response_type=code&scope=openid&nonce=97420ad2-b187-4ea4-b046-dab3b054e6da&code_challenge=nx6Ln6a_hLhqyy92FamngZdgfSlIeLCGVFx-uNp_e_Q&code_challenge_method=S256
+  
+  
+  
